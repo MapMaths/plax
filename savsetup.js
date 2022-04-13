@@ -10,8 +10,11 @@
 /**
  * @function setup - Setting up a basic SAV file automatically.
  * @param {int} type: 0 = Electricity, 1 = Graphical electricity, 3 = Universe, 4 = Electromagnetic
+ * @param {string} language: "Chinese", "English", "Polish"
+ * @param {string} category: "Experiment", "Discussion"
+ * @param {string} subject - The name of your project
  */
-function setup(type, language, category) {
+function setup(type, language, category, subject) {
     var json = {
         "Type": type,
         "Experiment": {
@@ -32,7 +35,7 @@ function setup(type, language, category) {
             "Version": 2303,
             "Language": language,
             "Category": category,
-            "Subject": "(申精)七段十进制DAC",
+            "Subject": subject,
             "LocalizedSubject": null,
         }
     };
