@@ -1,3 +1,3 @@
 # plcx
 
-Codes for automatically produce a formatted PLC(Physics Lab AR) local project
+JS API for editing PLC(Physics Lab AR) `.sav` local files
