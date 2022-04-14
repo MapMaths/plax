@@ -8,11 +8,11 @@
  */
 
 /**
- * @function setup - Setting up a basic SAV file automatically.
- * @param {int} type: 0 = Electricity, 1 = Graphical electricity, 3 = Universe, 4 = Electromagnetic
- * @param {string} language: "Chinese", "English", "Polish"
- * @param {string} category: "Experiment", "Discussion"
- * @param {string} subject - The name of your project
+ * @function Setting up a basic SAV file automatically.
+ * @param {int} type 0 = Electricity, 1 = Graphical electricity, 3 = Universe, 4 = Electromagnetic.
+ * @param {string} language "Chinese", "English", "Polish".
+ * @param {string} category "Experiment", "Discussion".
+ * @param {string} subject The name of your project.
  */
 function setup(type, language, category, subject) {
     var json = {
@@ -39,4 +39,8 @@ function setup(type, language, category, subject) {
             "LocalizedSubject": null,
         }
     };
+    return json;
 }
+
+// Export the functions
+export { setup };
