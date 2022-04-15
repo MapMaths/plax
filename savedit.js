@@ -5,7 +5,6 @@
  * @author MapMaths
  * @repo https://GitHub.com/MapMaths/plcx
  * @description Edit present JSON files.
- * @en Node.js
  */
 
 "use strict";
