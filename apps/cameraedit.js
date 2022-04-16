@@ -7,7 +7,7 @@
  * @description A short app to read and write a PLC local file.
  */
 
-const plcx = require("../savedit.js"),
+const plcx = require("..\\savedit.js"),
     filename = "C:\\Users\\Administrator\\AppData\\LocalLow\\CIVITAS\\Quantum Physics\\Circuit\\307e56b8-2f9a-4d11-bb29-f227b32e2eee.sav";
 var json = plcx.read(filename);
 
