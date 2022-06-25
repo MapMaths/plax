@@ -48,16 +48,29 @@ function setCamera(json, mode, dist, pos, dir) {
 }
 
 class Element {
-    constructor(json, id) {
+    constructor(json, element) {
         let elements = JSON.parse(json.Experiment.StatusSave).Elements;
-        for(let i = 0; i < elements.length; i++) {
-            if (elements[i].Identifier == id) {
-                this.json = elements[i];
-                this.num = i;
-                break;
+        if (element[0] != null) { // id
+            for (let i = 0; i < elements.length; i++) {
+                if (elements[i].Identifier == element[0]) {
+                    this.json = elements[i];
+                    this.num = i;
+                    break;
+                }
+            }
+        } else if (element[1] != null) { // number
+            this.json = elements[element[1]];
+            this.num = element[1];
+        } else { // element name
+            for (let i = 0; i < elements.length; i++) {
+                if (elements[i].Identifier == element[2]) {
+                    this.json = elements[i];
+                    this.num = i;
+                    break;
+                }
             }
         }
-        this.id = id;
+        this.id = this.json.Identifier;
         this.pos = this.json.Position;
         this.rot = this.json.Rotation;
     }
