@@ -47,6 +47,57 @@ function setCamera(json, mode, dist, pos, dir) {
     return origin;
 }
 
+/* working
+function line(Element, Element) {
+
+}
+*/
+
+/**
+ * @function Copy all elements and move them by a specific steps.
+ * @warning This function might be deprecated anytime since the developer of PLC's gonna add this to the software program.
+ * @param {[float, float, float]} steps The steps with an index of [x, y, z]
+ */
+function copyAllElementsAndMove(json, steps) {
+    let origin = json;
+    let elements = JSON.parse(origin.Experiment.StatusSave).Elements;
+    let copy = elements;
+    for(let i = 0; i < copy.length; i++) {
+        let pos = copy[i].Position.split(",").map(Number);
+        copy[i].Identifier = generateNewElementID(json)
+        copy[i].Position = `${pos[0] + steps[0]},${pos[1] + steps[2]},${pos[2] + steps[1]}`;
+    }
+    elements = elements.concat(copy);
+    origin.Experiment.CameraSave = JSON.stringify(elements);
+    return origin;
+}
+
+function generateNewElementID(json) {
+    let elements = JSON.parse(json.Experiment.StatusSave).Elements;
+    let repeated = true;
+    while (repeated) {
+        let id = randomID(32);
+        // Is it a repeated ID?
+        for (let i = 0; i < elements.length; i++) {
+            if (!repeated) repeated = false;
+            if (elements[i].Identifier == id) repeated = true;
+        }
+    }
+    return id;
+}
+
+function randomID(length) {
+    // Generate a random HEX ID, by the given length.
+    let id = "";
+    for (let i = 0; i < length; i++) {
+        rand = Math.floor(Math.random() * 16);
+        let n = 48;
+        if (rand >= 10) n = 87; // a bit lazy LOL
+        id += String.fromCharCode(n + rand);
+    }
+    return id;
+}
+
 class Element {
     constructor(json, element) {
         let elements = JSON.parse(json.Experiment.StatusSave).Elements;
@@ -92,15 +143,18 @@ class Element {
     fix() {
         this.json.IsBroken = false;
     }
+    /*
     insert(json) {
         let origin = json;
         JSON.parse(origin.Experiment.StatusSave).Elements[this.num] = this.json;
         return origin;
     }
+    */
 }
 
 // Export the functions.
 exports.read = read;
 exports.write = write;
 exports.setCamera = setCamera;
+exports.copyAllElementsAndMove = copyAllElementsAndMove;
 exports.Element = Element;
