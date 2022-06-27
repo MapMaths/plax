@@ -1,5 +1,5 @@
 /**
- * @file apps/edit.js
+ * @file apps/cameraedit.js
  * @copyright Copyright (c) 2022 MapMaths
  * @license MIT
  * @author MapMaths
