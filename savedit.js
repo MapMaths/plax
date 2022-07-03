@@ -59,17 +59,16 @@ function line(Element, Element) {
 function copyAllElementsAndMove(json, steps) {
     let origin = json;
     let status = JSON.parse(origin.Experiment.StatusSave);
-    let elements = status.Elements;
-    let copy = elements;
+    let copy = status.Elements;
     for(let i = 0; i < copy.length; i++) {
-        console.log(i);
         let pos = copy[i].Position.split(",").map(Number);
         copy[i].Identifier = generateNewElementID(json)
-        console.log("done");
+        console.log(copy[i].Identifier);
+        console.log(JSON.parse(origin.Experiment.StatusSave).Elements[i].Identifier);
         copy[i].Position = `${pos[0] + steps[0]},${pos[1] + steps[2]},${pos[2] + steps[1]}`;
     }
-    elements = elements.concat(copy);
-    status.Elements = elements;
+    copy = JSON.parse(origin.Experiment.StatusSave).Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are binded together, but not completely
+    status.Elements = copy;
     origin.Experiment.StatusSave = JSON.stringify(status);
     return origin;
 }
