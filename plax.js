@@ -45,12 +45,6 @@ function setCamera(json, mode, dist, pos, dir) {
     return origin;
 }
 
-/* working
-function line(Element, Element) {
-
-}
-*/
-
 /**
  * @function Copy all elements and move them by a specific steps.
  * @warning This function might be deprecated anytime since the developer of PLC's gonna add this to the software program.
@@ -99,6 +93,12 @@ function randomID(length) {
     return id;
 }
 
+function line(json, SourceElement, TargetElement, sourcePin, targetPin) {
+    let origin = json;
+    let status = JSON.parse(origin.Experiment.StatusSave);
+    status.Wires.concat();
+}
+
 class Element {
     constructor(json, element) {
         let elements = JSON.parse(json.Experiment.StatusSave).Elements;
@@ -139,6 +139,12 @@ class Element {
         this.rot.xz = rot[1];
         this.rot.yz = rot[2];
     }
+    lock() {
+        this.json.IsLocked = true;
+    }
+    unlock(){
+        this.json.IsLocked = false;
+    }
     break() {
         this.json.IsBroken = true;
     }
@@ -159,5 +165,4 @@ exports.read = read;
 exports.write = write;
 exports.setCamera = setCamera;
 exports.copyAllElementsAndMove = copyAllElementsAndMove;
-exports.generateNewElementID = generateNewElementID;
 exports.Element = Element;
