@@ -69,13 +69,24 @@ class Editor {
         return this.json;
     }
 
-    line(SourceElement, TargetElement, sourcePin, targetPin) {
+    wire(SourceElement, sourcePin, TargetElement, targetPin, color='蓝色导线') {
         let status = JSON.parse(this.json.StatusSave);
-        status.Wires.concat();
+        status.Wires.concat({
+            Source: SourceElement.id,
+            SourcePin: sourcePin,
+            Target: TargetElement.id,
+            TargetPin: targetPin,
+            ColorName: color
+        });
+        this.json.StatusSave = JSON.stringify(status);
+        return this.json;
     }
 
-    insert(Element, id=Element.id, n=Element.num) {
-        
+    insert(Element, n=null, last=1) {
+        let status = JSON.parse(this.json.StatusSave);
+        status.Elements.splice(n == null ? status.Elements.length-last+1 : n-1, 0, Element.json);
+        this.json.StatusSave = status;
+        return this.json;
     }
 
     replace(Element, id=Element.id, n=Element.num) {}
@@ -85,7 +96,7 @@ class Element {
     constructor(Editor, id=null, type=null, n=null) {
         let json = Editor.json ? Editor.json : Editor;
         let elements = JSON.parse(json.StatusSave).Elements;
-        
+
         function cantFind() {throw SyntaxError("Can't find the element you are looking for.");}
         if (id != null) {
             if (type != null || n != null) throw SyntaxError("Unexpected arguments 'type' and 'n'.");
@@ -110,7 +121,7 @@ class Element {
             cantFind();
         } else if (n != null) {
             this.json = elements[n-1] || cantFind();
-            this.num = n;
+            this.num = n - 1;
         } else {cantFind();}
         this.id = this.json.Identifier;
     }
@@ -138,6 +149,11 @@ class Element {
     fix() {
         this.json.IsBroken = false;
     }
+    
+    newID(Editor) {
+        let json = Editor.json ? Editor.json : Editor;
+        this.json.Identifier = tool.generateNewElementID(json);
+        this.id = this.json.Identifier;
 }
 
 // Export the functions.
