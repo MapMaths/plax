@@ -7,7 +7,8 @@
  * @description Edit present JSON files.
  */
 
-const fs = require("fs"); // Import File System.
+const fs = require("fs");             // Import File System.
+const tool = require("/tools.js");
 
 const consts = {
     DEFAULT_PATH_WINDOWS: "C:\\Users\\Administrator\\AppData\\LocalLow\\CIVITAS\\Quantum Physics\\Circuit"
@@ -16,7 +17,9 @@ const consts = {
 class Editor {
     constructor(filename, syntax="utf8") {
         this.filename = filename;
-        this.json = JSON.parse(fs.readFileSync(filename, syntax));
+        this.JSON_ORIGIN = JSON.parse(fs.readFileSync(filename, syntax));
+        this.SIMPLIFIED = this.JSON_ORIGIN.Experiment ? false : true;
+        this.json = this.SIMPLIFIED ? this.JSON_ORIGIN : this.JSON_ORIGIN.Experiment;
     }
 
     /**
@@ -24,7 +27,9 @@ class Editor {
      * @param {string} filename The full absolute directory of the file.
      */
     write(filename=this.filename) {
-        fs.writeFileSync(filename, JSON.stringify(this.json, null, 2));
+        if (this.SIMPLIFIED) this.JSON_ORIGIN = this.json;
+        else this.JSON_ORIGIN.Experiment = this.json;
+        fs.writeFileSync(filename, JSON.stringify(this.JSON_ORIGIN, null, 2));
     }
 
     /**
@@ -35,15 +40,13 @@ class Editor {
      * @param {[float, float, float]} dir The direction of the camera, at an index of [xy, xz, yz].
      */
     setCamera(mode=null, dist=null, pos=null, dir=null) {
-        let origin = this.json;
-        let modify = JSON.parse(origin.Experiment.CameraSave);
-        if (mode != null) modify.Mode = mode;
-        if (dist != null) modify.Distance = dist;
-        if (pos != null) modify.VisionCenter = `${pos[0]},${pos[2]},${pos[1]}`;
-        if (dir != null) modify.TargetRotation = `${dir[0]},${dir[2]},${dir[1]}`;
-        origin.Experiment.CameraSave = JSON.stringify(modify);
-        this.json = origin;
-        return origin;
+        let camera = JSON.parse(this.json.CameraSave);
+        if (mode != null) camera.Mode = mode;
+        if (dist != null) camera.Distance = dist;
+        if (pos != null) camera.VisionCenter = `${pos[0]},${pos[2]},${pos[1]}`;
+        if (dir != null) camera.TargetRotation = `${dir[0]},${dir[2]},${dir[1]}`;
+        this.json.CameraSave = JSON.stringify(camera);
+        return this.json;
     }
 
     /**
@@ -52,52 +55,22 @@ class Editor {
      * @param {[float, float, float]} steps The steps with an index of [x, y, z]
      */
     copyAllElementsAndMove(steps) {
-        let origin = this.json;
-        let status = JSON.parse(origin.Experiment.StatusSave);
+        let status = JSON.parse(this.json.StatusSave);
         let copy = status.Elements;
         for (let i = 0; i < copy.length; i++) {
             let pos = copy[i].Position.split(",").map(Number);
-            copy[i].Identifier = generateNewElementID(json);
+            copy[i].Identifier = tool.generateNewElementID(this.json);
             copy[i].Position = `${pos[0] + steps[0]},${pos[1] + steps[2]},${pos[2] + steps[1]}`;
         }
-        copy = JSON.parse(origin.Experiment.StatusSave).Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are binded together, but not completely
+        copy = JSON.parse(this.json.StatusSave).Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are binded together, but not completely
         status.Elements = copy;
-        origin.Experiment.StatusSave = JSON.stringify(status);
-        origin.Components += copy.length;
-        this.json = origin;
-        return origin;
-    }
-
-    generateNewElementID() {
-        let elements = JSON.parse(json.Experiment.StatusSave).Elements;
-        let repeated = true;
-        let id = '';
-        while (repeated) {
-            repeated = false;
-            id = randomID(32);
-            // Is it a repeated ID?
-            for (let i = 0; i < elements.length; i++) {
-                if (!repeated) repeated = false;
-                if (elements[i].Identifier == id) repeated = true;
-            }
-        }
-        return id;
-    }
-
-    randomID(length) {
-        // Generate a random HEX ID, by the given length.
-        let id = "";
-        for (let i = 0; i < length; i++) {
-            let rand = Math.floor(Math.random() * 16);
-            let n = rand < 10 ? 48 : 87;
-            id += String.fromCharCode(n + rand);
-        }
-        return id;
+        this.json.StatusSave = JSON.stringify(status);
+        this.json.Components += copy.length;
+        return this.json;
     }
 
     line(SourceElement, TargetElement, sourcePin, targetPin) {
-        let origin = json;
-        let status = JSON.parse(origin.Experiment.StatusSave);
+        let status = JSON.parse(this.json.StatusSave);
         status.Wires.concat();
     }
 
@@ -111,7 +84,7 @@ class Editor {
 class Element {
     constructor(Editor, id=null, type=null, n=null) {
         let json = Editor.json ? Editor.json : Editor;
-        let elements = JSON.parse(json.Experiment.StatusSave).Elements;
+        let elements = JSON.parse(json.StatusSave).Elements;
         
         function cantFind() {throw SyntaxError("Can't find the element you are looking for.");}
         if (id != null) {
@@ -164,14 +137,6 @@ class Element {
 
     fix() {
         this.json.IsBroken = false;
-    }
-
-    insert(json) {
-        let origin = json;
-        let status = JSON.parse(origin.Experiment.StatusSave);
-        status.Elements[this.num] = this.json;
-        origin.Experiment.StatusSave = JSON.stringify(status)
-        return origin;
     }
 }
 
