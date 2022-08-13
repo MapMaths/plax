@@ -34,6 +34,13 @@ generateNewElementID(json) {
   return id;
 }
 
+function elementError() {
+  let e = new Error("Can't find the element you are looking for.");
+  e.name = 'ElementError';
+  throw e;
+}
+
 // Export the functions.
 exports.randomID = randomID;
 exports.generateNewElementID = generateNewElementID;
+exports.elementError = elementError;
