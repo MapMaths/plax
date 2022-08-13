@@ -7,4 +7,5 @@
 
 ## Releases
 Now still in alpha channel: v0.1.0-alpha
+
 We use [semantic versioning](https://semver.org).
