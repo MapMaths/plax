@@ -8,10 +8,10 @@
  */
 
 const fs = require("fs");             // Import File System.
-const tool = require("/tools.js");
+const tool = require("./tools.js");
 
 const consts = {
-    DEFAULT_PATH_WINDOWS: "C:\\Users\\Administrator\\AppData\\LocalLow\\CIVITAS\\Quantum Physics\\Circuit"
+    DEFAULT_PATH_WINDOWS: process.env.USERPROFILE + "\\AppData\\LocalLow\\CIVITAS\\Quantum Physics\\Circuit"
 }
 
 class Editor {
@@ -40,7 +40,7 @@ class Editor {
      * @param {[float, float, float]} dir The direction of the camera, at an index of [xy, xz, yz].
      */
     setCamera(mode=null, dist=null, pos=null, dir=null) {
-        let camera = JSON.parse(this.json.CameraSave);
+        let camera = this.status;
         if (mode != null) camera.Mode = mode;
         if (dist != null) camera.Distance = dist;
         if (pos != null) camera.VisionCenter = `${pos[0]},${pos[2]},${pos[1]}`;
@@ -55,14 +55,14 @@ class Editor {
      * @param {[float, float, float]} steps The steps with an index of [x, y, z]
      */
     copyAllElementsAndMove(steps) {
-        let status = JSON.parse(this.json.StatusSave);
+        let status = this.status;
         let copy = status.Elements;
         for (let i = 0; i < copy.length; i++) {
             let pos = copy[i].Position.split(",").map(Number);
             copy[i].Identifier = tool.generateNewElementID(this.json);
             copy[i].Position = `${pos[0] + steps[0]},${pos[1] + steps[2]},${pos[2] + steps[1]}`;
         }
-        copy = JSON.parse(this.json.StatusSave).Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are binded together, but not completely
+        copy = this.status.Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are binded together, but not completely
         status.Elements = copy;
         this.json.StatusSave = JSON.stringify(status);
         this.json.Components += copy.length;
@@ -70,7 +70,7 @@ class Editor {
     }
 
     wire(SourceElement, sourcePin, TargetElement, targetPin, color='蓝色导线') {
-        let status = JSON.parse(this.json.StatusSave);
+        let status = this.status;
         status.Wires.concat({
             Source: SourceElement.id,
             SourcePin: sourcePin,
@@ -83,13 +83,29 @@ class Editor {
     }
 
     insert(Element, n=null, last=1) {
-        let status = JSON.parse(this.json.StatusSave);
+        let status = this.status;
         status.Elements.splice(n == null ? status.Elements.length-last+1 : n-1, 0, Element.json);
-        this.json.StatusSave = status;
+        this.json.StatusSave = JSON.stringify(status);
         return this.json;
     }
 
-    replace(Element, id=Element.id, n=Element.num) {}
+    replace(Element, id=Element.id, n=null, last=null) {
+        let status = this.status;
+        if (n==null && last==null) {
+            let x = status.Elements.findIndex(x => x.Identifier == id);
+            x == -1 && tool.elementError();
+            status.Elements.splice(x, 1, Element.json);
+        } else {
+            let x = status.Elements.splice(n == null ? -last : n-1, 1, Element.json);
+            x[0] == undefined && tool.elementError();
+        }
+        this.json.StatusSave = JSON.stringify(status);
+        return this.json;
+    }
+    
+    get status() {
+        return JSON.parse(this.json.StatusSave)
+    }
 }
 
 class Element {
@@ -97,7 +113,6 @@ class Element {
         let json = Editor.json ? Editor.json : Editor;
         let elements = JSON.parse(json.StatusSave).Elements;
 
-        function cantFind() {throw SyntaxError("Can't find the element you are looking for.");}
         if (id != null) {
             if (type != null || n != null) throw SyntaxError("Unexpected arguments 'type' and 'n'.");
             for (let i = 0; i < elements.length; i++) {
@@ -106,7 +121,7 @@ class Element {
                     this.num = i; break;
                 }
             }
-            cantFind();
+            tool.elementError();
         } else if (type != null) {
             for (let i = 0; i < elements.length; i++) {
                 let num = 0;
@@ -118,12 +133,13 @@ class Element {
                     this.num = i; break;
                 }
             }
-            cantFind();
+            tool.elementError();
         } else if (n != null) {
-            this.json = elements[n-1] || cantFind();
+            this.json = elements[n-1] || tool.elementError();
             this.num = n - 1;
-        } else {cantFind();}
-        this.id = this.json.Identifier;
+        } else {
+            throw SyntaxError("At least one argument should have value.");
+        }
     }
 
     setPos(pos) {
@@ -153,7 +169,11 @@ class Element {
     newID(Editor) {
         let json = Editor.json ? Editor.json : Editor;
         this.json.Identifier = tool.generateNewElementID(json);
-        this.id = this.json.Identifier;
+    }
+    
+    get id() {
+        return this.json.Identifier;
+    }
 }
 
 // Export the functions.
