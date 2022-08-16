@@ -59,7 +59,7 @@ class Editor {
         let copy = status.Elements;
         for (let i = 0; i < copy.length; i++) {
             let pos = copy[i].Position.split(",").map(Number);
-            copy[i].Identifier = tool.generateNewElementID(this.json);
+            copy[i].Identifier = base.generateNewElementID(this.json);
             copy[i].Position = `${pos[0] + steps[0]},${pos[1] + steps[2]},${pos[2] + steps[1]}`;
         }
         copy = this.status.Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are binded together, but not completely
@@ -93,11 +93,11 @@ class Editor {
         let status = this.status;
         if (n==null && last==null) {
             let x = status.Elements.findIndex(x => x.Identifier == id);
-            x == -1 && tool.elementError();
+            x == -1 && base.elementError();
             status.Elements.splice(x, 1, Element.json);
         } else {
             let x = status.Elements.splice(n == null ? -last : n-1, 1, Element.json);
-            x[0] == undefined && tool.elementError();
+            x[0] == undefined && base.elementError();
         }
         this.json.StatusSave = JSON.stringify(status);
         return this.json;
@@ -121,7 +121,7 @@ class Element {
                     this.num = i; break;
                 }
             }
-            tool.elementError();
+            base.elementError();
         } else if (type != null) {
             for (let i = 0; i < elements.length; i++) {
                 let num = 0;
@@ -133,9 +133,9 @@ class Element {
                     this.num = i; break;
                 }
             }
-            tool.elementError();
+            base.elementError();
         } else if (n != null) {
-            this.json = elements[n-1] || tool.elementError();
+            this.json = elements[n-1] || base.elementError();
             this.num = n - 1;
         } else {
             throw SyntaxError("At least one argument should have value.");
@@ -168,7 +168,7 @@ class Element {
     
     newID(Editor) {
         let json = Editor.json ? Editor.json : Editor;
-        this.json.Identifier = tool.generateNewElementID(json);
+        this.json.Identifier = base.generateNewElementID(json);
     }
     
     get id() {
