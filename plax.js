@@ -179,4 +179,4 @@ class Element {
 // Export the functions.
 exports.consts = consts;
 exports.Editor = Editor;
-exports.Elements = Elements;
+exports.Element = Element;
