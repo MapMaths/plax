@@ -7,7 +7,7 @@
  * @description Setting up environment for JSON files.
  */
 
-randomID(length) {
+function randomID(length) {
   // Generate a random HEX ID, by the given length.
   let id = "";
   for (let i = 0; i < length; i++) {
@@ -18,7 +18,7 @@ randomID(length) {
   return id;
 }
 
-generateNewElementID(json) {
+function generateNewElementID(json) {
   let elements = JSON.parse(json.StatusSave).Elements;
   let repeated = true;
   let id = '';
