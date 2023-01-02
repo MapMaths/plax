@@ -4,14 +4,22 @@
  * @license MIT
  * @author MapMaths
  * @repo https://GitHub.com/MapMaths/plax
- * @description Edit present JSON files.
+ * @description Edit PLA JSON files.
  */
 
 const fs = require("fs");             // Import File System.
 const base = require("./tool/base.js");
+const ElementClass = require("./element.js").Element;
 
 const consts = {
-    DEFAULT_PATH_WINDOWS: process.env.USERPROFILE + "\\AppData\\LocalLow\\CIVITAS\\Quantum Physics\\Circuit"
+    DEFAULT_PATH_WINDOWS: process.env.USERPROFILE + "\\AppData\\LocalLow\\CIVITAS\\Quantum Physics\\Circuit",
+    wire: {
+        black: "黑色导线",
+        blue: "蓝色导线",
+        red: "红色导线",
+        green: "绿色导线",
+        yellow: "黄色导线"
+    }
 }
 
 class Editor {
@@ -49,9 +57,15 @@ class Editor {
         return this.json;
     }
 
+    /*
+    setAttrToAll(attr, val) {
+
+    }
+    */
+
     /**
      * @method Copy all elements and move them by a specific steps.
-     * @warning This function might be deprecated anytime since the developer of PLC's gonna add this to the software program.
+     * @warning This function might be deprecated anytime since the developer of PLC is adding this function to the software program.
      * @param {[float, float, float]} steps The steps with an index of [x, y, z]
      */
     copyAllElementsAndMove(steps) {
@@ -62,7 +76,7 @@ class Editor {
             copy[i].Identifier = base.generateNewElementID(this.json);
             copy[i].Position = `${pos[0] + steps[0]},${pos[1] + steps[2]},${pos[2] + steps[1]}`;
         }
-        copy = this.status.Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are binded together, but not completely
+        copy = this.status.Elements.concat(copy); // It seems two vars `copy` & `status.Elements` are bound together, but not completely
         status.Elements = copy;
         this.json.StatusSave = JSON.stringify(status);
         this.json.Components += copy.length;
@@ -71,7 +85,7 @@ class Editor {
 
     wire(SourceElement, sourcePin, TargetElement, targetPin, color='蓝色导线') {
         let status = this.status;
-        status.Wires.concat({
+        status.Wires.push({
             Source: SourceElement.id,
             SourcePin: sourcePin,
             Target: TargetElement.id,
@@ -79,8 +93,34 @@ class Editor {
             ColorName: color
         });
         this.json.StatusSave = JSON.stringify(status);
+        return status.Wires;
+    }
+
+    /**
+     * @method Copy all elements and wires and move them by a specific steps.
+     * @warning This function might be deprecated anytime since the developer of PLC is adding this function to the software program.
+     * @param {[float, float, float]} steps The steps with an index of [x, y, z]
+     */
+    copyAllAndMove(steps) {
+        this.copyAllElementsAndMove(steps);
+        let status = this.status;
+        let l = status.Elements.length/2;
+        for (let i = 0; i < status.Wires.length; i++) {
+            let wire = status.Wires[i],
+                es = new ElementClass(this.json, wire.Source),                  // Find the original elements
+                et = new ElementClass(this.json, wire.Target),                  // Via ID
+                nes = new ElementClass(this.json, null, null, es.index + l),    // Find the moved elements
+                net = new ElementClass(this.json, null, null, et.index + l);    // Via index
+            this.wire(nes, wire.SourcePin, net, wire.TargetPin, wire.ColorName);
+        }
         return this.json;
     }
+
+    /*
+    fillWires() {
+
+    }
+    */
 
     insert(Element, n=null, last=1) {
         let status = this.status;
@@ -102,81 +142,125 @@ class Editor {
         this.json.StatusSave = JSON.stringify(status);
         return this.json;
     }
+
+    change(ElementSet) {
+        let elements = [];
+        for(let i = 0; i < ElementSet.card; i++) {
+            elements.push(ElementSet.json(i));
+        }
+        let status = this.status;
+        status.Elements = elements;
+        this.json.StatusSave = JSON.stringify(status);
+        return this.json;
+    }
+
+    append(ElementSet) {
+        let elements = [];
+        for(let i = 0; i < ElementSet.card; i++) {
+            elements.push(ElementSet.json(i));
+        }
+        let status = this.status;
+        status.Elements.concat(elements);
+        this.json.StatusSave = JSON.stringify(status);
+        return this.json;
+    }
+
+    /*
+    refresh(ElementSet) {
+
+    }
+    */
     
     get status() {
         return JSON.parse(this.json.StatusSave)
     }
 }
 
-class Element {
-    constructor(Editor, id=null, type=null, n=null) {
+class ElementSet {
+    constructor(Editor=null, Element=null, type=null, from=null, to=null) {
         let json = Editor.json ? Editor.json : Editor;
         let elements = JSON.parse(json.StatusSave).Elements;
+        this.elements = [];
+        if (Editor != null) {
+            if (Element != null) throw SyntaxError("Unexpected argument 'Element'.");
+            if (type != null) {
+                for (let i = 0; i < elements.length; i++) {
 
-        if (id != null) {
-            if (type != null || n != null) throw SyntaxError("Unexpected arguments 'type' and 'n'.");
-            for (let i = 0; i < elements.length; i++) {
-                if (elements[i].Identifier == id) {
-                    this.json = elements[i];
-                    this.num = i; break;
+                }
+            } else {
+                let e;
+                for (let i = 0; i < elements.length; i++) {
+                    e = new ElementClass(Editor, null, null, i)
+                    this.elements.push(e);
                 }
             }
-            base.elementError();
+        } else if (Element != null) {
+            this.elements[0] = Element;
         } else if (type != null) {
-            for (let i = 0; i < elements.length; i++) {
-                let num = 0;
-                if (elements[i].Identifier == type) {
-                    if (n != null) {
-                        num++; if(num < n) continue;
-                    }
-                    this.json = elements[i];
-                    this.num = i; break;
-                }
-            }
-            base.elementError();
-        } else if (n != null) {
-            this.json = elements[n-1] || base.elementError();
-            this.num = n - 1;
-        } else {
-            throw SyntaxError("At least one argument should have value.");
+            throw SyntaxError("No 'Editor' is found.");
         }
     }
-
-    setPos(pos) {
-        this.json.Position = `${pos[0]},${pos[2]},${pos[1]}`;
-    }
-
-    setRot(rot) {
-        this.json.Rotation = `${rot[0]},${rot[2]},${rot[1]}`;
-    }
-
-    lock() {
-        this.json.IsLocked = true;
-    }
-
-    unlock() {
-        this.json.IsLocked = false;
-    }
-
-    break() {
-        this.json.IsBroken = true;
-    }
-
-    fix() {
-        this.json.IsBroken = false;
-    }
     
-    newID(Editor) {
-        let json = Editor.json ? Editor.json : Editor;
-        this.json.Identifier = base.generateNewElementID(json);
+    index(n) {
+        return this.elements[n].index;
     }
-    
-    get id() {
-        return this.json.Identifier;
+
+    json(n) {
+        return this.elements[n].json;
+    }
+
+    lockAll() {
+        for (let i = 0; i < this.card; i++) this.elements[i].lock();
+        return this.elements;
+    }
+
+    unlockAll() {
+        for (let i = 0; i < this.card; i++) this.elements[i].unlock();
+        return this.elements;
+    }
+
+    breakAll() {
+        for (let i = 0; i < this.card; i++) this.elements[i].break();
+        return this.elements;
+    }
+
+    fixAll() {
+        for (let i = 0; i < this.card; i++) this.elements[i].fix();
+        return this.elements;
+    }
+
+    moveAll(steps) {
+        for (let i = 0; i < this.card; i++) this.elements[i].move(steps);
+        return this.elements;
+    }
+
+    gather(pos) {
+        for (let i = 0; i < this.card; i++) this.elements[i].setPos(pos);
+        return this.elements;
+    }
+
+    /*
+    push(Element) {
+
+    }
+
+    delete(n=null, id=null) {
+
+    }
+    */
+
+    refreshID(Editor) {
+        for (let i = 0; i < this.card; i++) this.elements[i].newID(Editor);
+        return this.elements;
+    }
+
+    get card() {
+        return this.elements.length;
     }
 }
 
 // Export the functions.
 exports.consts = consts;
 exports.Editor = Editor;
-exports.Element = Element;
+exports.ElementSet = ElementSet;
+exports.Element = ElementClass;

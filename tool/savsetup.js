@@ -43,4 +43,4 @@ function setup(type, language, category, subject) {
 }
 
 // Export the functions
-export { setup };
+exports.setup = setup;
