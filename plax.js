@@ -161,12 +161,15 @@ class Editor {
      * @param {ElementSet} ElementSet The ElementSet that is to replace the one in JSON.
      */
     change(ElementSet) {
-        let elements = [];
-        for(let i = 0; i < ElementSet.card; i++) {
-            elements.push(ElementSet.json(i));
-        }
         let status = this.status;
-        status.Elements = elements;
+        status.Elements = [];
+        status.Wires = [];
+        for(let i = 0; i < ElementSet.card; i++) {
+            status.Elements.push(ElementSet.json(i));
+        }
+        for(let i = 0; i < ElementSet.wires.length; i++) {
+            status.Wires.push(ElementSet.wires[i]);
+        }
         this.json.StatusSave = JSON.stringify(status);
         return this.json;
     }
@@ -176,12 +179,14 @@ class Editor {
      * @param {ElementSet} ElementSet The ElementSet that is to be appended.
      */
     append(ElementSet) {
-        let elements = [];
-        for(let i = 0; i < ElementSet.card; i++) {
-            elements.push(ElementSet.json(i));
-        }
         let status = this.status;
-        this.json.StatusSave = JSON.stringify(status.Elements.concat(elements));
+        for(let i = 0; i < ElementSet.card; i++) {
+            status.Elements.push(ElementSet.json(i));
+        }
+        for(let i = 0; i < ElementSet.wires.length; i++) {
+            status.Wires.push(ElementSet.wires[i]);
+        }
+        this.json.StatusSave = JSON.stringify(status);
         return this.json;
     }
 
@@ -199,18 +204,19 @@ class Editor {
 class ElementSet {
     constructor(Editor=null, Element=null, type=null, from=null, to=null) {
         let json = Editor.json ? Editor.json : Editor;
-        let elements = JSON.parse(json.StatusSave).Elements;
+        let elements = Editor.status.Elements;
         this.elements = [];
         if (Editor != null) {
             if (Element != null) throw SyntaxError("Unexpected argument 'Element'.");
             if (type != null) {
                 for (let i = 0; i < elements.length; i++) {
-
+                    if (elements[i].ModelID == type) e = new ElementClass(Editor, null, null, i);
+                    this.elements.push(e);
                 }
             } else {
                 let e;
                 for (let i = 0; i < elements.length; i++) {
-                    e = new ElementClass(Editor, null, null, i)
+                    e = new ElementClass(Editor, null, null, i);
                     this.elements.push(e);
                 }
             }
@@ -218,6 +224,14 @@ class ElementSet {
             this.elements[0] = Element;
         } else if (type != null) {
             throw SyntaxError("No 'Editor' is found.");
+        }
+        this.wires = []
+        for (const wire of Editor.status.Wires) {
+            for (const ele of this.elements) {
+                if (ele.id == wire.Source || ele.id == wire.Target) {
+                    this.wires.push(wire)
+                }
+            }
         }
     }
     
@@ -227,6 +241,10 @@ class ElementSet {
 
     json(n) {
         return this.elements[n].json;
+    }
+
+    id(n) {
+        return this.elements[n].id;
     }
 
     lockAll() {
@@ -239,8 +257,8 @@ class ElementSet {
         return this.elements;
     }
 
-    breakAll() {
-        for (let i = 0; i < this.card; i++) this.elements[i].break();
+    burnAll() {
+        for (let i = 0; i < this.card; i++) this.elements[i].burn();
         return this.elements;
     }
 
@@ -270,7 +288,26 @@ class ElementSet {
     */
 
     refreshID(Editor) {
-        for (let i = 0; i < this.card; i++) this.elements[i].newID(Editor);
+        for (let i = 0; i < this.card; i++) {
+            let eleID = this.elements[i].id;
+            let releventWires = [];
+            for (const [index, wire] of this.wires.entries()) {
+                if (wire.Source == eleID) {
+                    releventWires.push([index, 1]);
+                } else if (wire.Target == eleID) {
+                    releventWires.push([index, 2]);
+                }
+            }
+            this.elements[i].newID(Editor);
+            eleID = this.elements[i].id;
+            for (const [index, place] of releventWires) {
+                if (place == 1) {
+                    this.wires[index].Source = eleID;
+                } else {
+                    this.wires[index].Target = eleID;
+                }
+            }
+        }
         return this.elements;
     }
 
