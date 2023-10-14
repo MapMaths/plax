@@ -66,7 +66,7 @@ class Editor {
     /**
      * @method Copy all elements and move them by a specific steps.
      * @warning This function might be deprecated anytime since the developer of PLC is adding this function to the software program.
-     * @param {[float, float, float]} steps The steps with an index of [x, y, z]
+     * @param {[float, float, float]} steps The steps with an index of [x, y, z].
      */
     copyAllElementsAndMove(steps) {
         let status = this.status;
@@ -99,7 +99,7 @@ class Editor {
     /**
      * @method Copy all elements and wires and move them by a specific steps.
      * @warning This function might be deprecated anytime since the developer of PLC is adding this function to the software program.
-     * @param {[float, float, float]} steps The steps with an index of [x, y, z]
+     * @param {[float, float, float]} steps The steps with an index of [x, y, z].
      */
     copyAllAndMove(steps) {
         this.copyAllElementsAndMove(steps);
@@ -122,13 +122,26 @@ class Editor {
     }
     */
 
+    /**
+     * @method Insert an element into JSON.
+     * @param {Element} Element The element that is to be inserted.
+     * @param {int} n The index.
+     * @param {last} last The index in reversed order. (Default: last one)
+     */
     insert(Element, n=null, last=1) {
         let status = this.status;
         status.Elements.splice(n == null ? status.Elements.length-last+1 : n-1, 0, Element.json);
         this.json.StatusSave = JSON.stringify(status);
         return this.json;
     }
-
+    
+    /**
+     * @method Replace an element in JSON with another
+     * @param {Element} Element The element that is to replace the one in JSON.
+     * @param {string} id The ID of the element which is to be replaced. (Default: The one which share the same ID with the Element)
+     * @param {int} n The index.
+     * @param {last} last The index in reversed order.
+     */
     replace(Element, id=Element.id, n=null, last=null) {
         let status = this.status;
         if (n==null && last==null) {
@@ -143,6 +156,10 @@ class Editor {
         return this.json;
     }
 
+    /**
+     * @method Replace all the elements with an ElementSet
+     * @param {ElementSet} ElementSet The ElementSet that is to replace the one in JSON.
+     */
     change(ElementSet) {
         let elements = [];
         for(let i = 0; i < ElementSet.card; i++) {
@@ -154,6 +171,10 @@ class Editor {
         return this.json;
     }
 
+    /**
+     * @method Push all the elements in an ElementSet into JSON. (Run `ElementSet.refreshID(Editor)` first)
+     * @param {ElementSet} ElementSet The ElementSet that is to be appended.
+     */
     append(ElementSet) {
         let elements = [];
         for(let i = 0; i < ElementSet.card; i++) {
