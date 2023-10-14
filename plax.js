@@ -181,8 +181,7 @@ class Editor {
             elements.push(ElementSet.json(i));
         }
         let status = this.status;
-        status.Elements.concat(elements);
-        this.json.StatusSave = JSON.stringify(status);
+        this.json.StatusSave = JSON.stringify(status.Elements.concat(elements));
         return this.json;
     }
 
