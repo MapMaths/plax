@@ -69,7 +69,7 @@ class Element {
         delete this.json.Properties.锁定;
     }
 
-    break() {
+    burn() {
         this.json.IsBroken = true;
     }
 
